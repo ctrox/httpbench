@@ -44,6 +44,12 @@ func main() {
 			n = 8
 		}
 
+		cont := r.URL.Query().Get("continuous")
+		c, err := strconv.ParseInt(cont, 10, 64)
+		if err != nil {
+			c = 0
+		}
+
 		if n <= p {
 			http.Error(w, "iterations have to be bigger than parallel", http.StatusBadRequest)
 			return
@@ -55,13 +61,28 @@ func main() {
 		}
 
 		startMsg := fmt.Sprintf("running bench with %d iterations and %d in parallel", n, p)
+		if c != 0 {
+			startMsg = fmt.Sprintf("running continuous bench for %dm with %d iterations and %d in parallel", c, n, p)
+		}
+
 		log.Println(startMsg)
 		fmt.Fprintf(w, "%s\n", startMsg)
 
-		res := runBench(cl, ts.URL, msg, int(n), int(p))
+		startTime := time.Now()
+		for {
+			res := runBench(cl, ts.URL, msg, int(n), int(p))
 
-		log.Println(res)
-		fmt.Fprintf(w, "%s\n", res)
+			log.Println(res)
+			fmt.Fprintf(w, "%s\n", res)
+
+			if c == 0 {
+				break
+			}
+
+			if time.Since(startTime) > time.Minute*time.Duration(c) {
+				break
+			}
+		}
 	}))
 }
 
