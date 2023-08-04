@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"time"
 )
@@ -25,7 +26,12 @@ func main() {
 		Transport: tr,
 	}
 
-	http.ListenAndServe("0.0.0.0:8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	port := "8080"
+	if len(os.Getenv("PORT")) != 0 {
+		port = os.Getenv("PORT")
+	}
+
+	http.ListenAndServe("0.0.0.0:"+port, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		iterations := r.URL.Query().Get("iterations")
 		n, err := strconv.ParseInt(iterations, 10, 64)
 		if err != nil {
